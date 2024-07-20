@@ -1,0 +1,13 @@
+{
+	"folders": [
+		{
+			"name": "Iono-API",
+			"path": "."
+		},
+		{
+			"name": "adobe-dc-pdf-services-sdk-python",
+			"path": "../A2SV hackathon/adobe-dc-pdf-services-sdk-python"
+		}
+	],
+	"settings": {}
+}
