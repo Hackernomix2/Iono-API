@@ -1,7 +1,10 @@
+import os
+import subprocess
 from django.shortcuts import render
+from django.conf import settings
 from.models import Project, Research, CollectedData 
 from .serializer import ProjectSerializer, ResearchSerializer, CollectedDataSerializer
-from rest_framework.decorators import api_view,permission_classes
+from rest_framework.decorators import api_view,permission_classes, parser_classes
 from rest_framework.permissions import IsAuthenticated,IsAdminUser
 from rest_framework.response import Response
 from rest_framework import status
@@ -9,6 +12,9 @@ from django.shortcuts import get_object_or_404
 from Tools.AI import chat, research , data_analysis
 from Tools.toolSet import read_sheet_data,start_service
 from Tools.prepareForm import load
+from rest_framework.parsers import MultiPartParser, FormParser
+
+
 
 #get all methode
 @api_view(['GET'])
@@ -146,6 +152,64 @@ def request_data_analysis(request , pk):
     research_name , description , goal , problem_statement = Project.name , Project.description , Project.goal , Project.problem_statement 
     analysis = data_analysis(research_name, description, goal, problem_statement , data)
     return Response({ 'AI' : analysis} , status = status.HTTP_200_OK)
+
+
+@api_view(['POST'])
+@parser_classes([MultiPartParser, FormParser])
+def upload_pdf_and_process(request):
+    if request.method == 'POST':
+        file = request.FILES['file']
+        paper_name = request.data.get('paperName', '')
+        author_id = request.data.get('author_id', None)
+        project_id = request.data.get('project_id', None)
+        author_name = request.data.get('authorName', '')
+        overview = request.data.get('documentOverview', '')
+
+        # Save the file temporarily
+        temp_path = os.path.join(settings.MEDIA_ROOT, 'temp', file.name)
+        with open(temp_path, 'wb+') as temp_file:
+            for chunk in file.chunks():
+                temp_file.write(chunk)
+    
+        # Prepare paths for OCR processing
+        ocr_script_path = r'adobe-dc-pdf-services-sdk-python\src\ocrpdf\ocr_pdf.py'
+        output_dir = os.path.join(settings.MEDIA_ROOT, 'ocr_output')
+        os.makedirs(output_dir, exist_ok=True)
+        output_file_path = os.path.join(output_dir, 'ocr_output.pdf')
+
+        # Call the OCR script using subprocess
+        try:
+            result = subprocess.run(
+                ['python', ocr_script_path, temp_path, output_file_path],
+                check=True,
+                capture_output=True,
+                text=True
+            )
+            ocr_output_path = result.stdout.strip()
+            print(f'OCR output path: {ocr_output_path}')
+        except subprocess.CalledProcessError as e:
+            print(e.stderr)
+            os.remove(temp_path)
+            return Response({'error': 'OCR processing failed'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+        # Prepare the research data
+        research_data = {
+            'paperName': paper_name,
+            'author': author_id,
+            'project': project_id,
+            'authorName': author_name,
+            'documentOverview': overview,  
+            'document': output_file_path, 
+        }
+
+        serializer = ResearchSerializer(data=research_data)
+        if serializer.is_valid():
+            serializer.save()
+            os.remove(temp_path) 
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        else:
+            os.remove(temp_path)  
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 #update methode
