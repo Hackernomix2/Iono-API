@@ -7,9 +7,11 @@ migrations
 db.sqlite3
 media
 test.rest
-Tools/
-Iono-API/adobe-dc-pdf-services-sdk-python/
 
+Iono-API/adobe-dc-pdf-services-sdk-python/
+gen-lang-client-0059733164-98382f30d2a2.json
+token.json
+client_secret.json
 
 # Backup files # 
 *.bak 

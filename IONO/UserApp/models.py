@@ -4,7 +4,6 @@ from django.contrib.auth.models import AbstractUser
 class User(AbstractUser):
     phone_number = models.CharField(max_length=12, null=True)
     gender = models.CharField(max_length=10, null=True)
-    pass
     # id (AutoField): 
     # password (CharField): Stores the hashed password.
     # username (CharField): The username field used for authentication.
