@@ -8,6 +8,7 @@ class Project(models.Model):
     description = models.TextField()
     problem_statement = models.TextField()
     goal = models.TextField()
+    previus_background = models.TextField(null=True, blank=True)
     start_date = models.DateField(auto_now_add=True)
 
 class Research(models.Model):
