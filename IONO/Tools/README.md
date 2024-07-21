@@ -1,4 +1,4 @@
-# !!! some fies in Tools could not be pushed tp git because it contains secret keys
+# !! some fies in Tools could not be pushed to github because it contains secret keys
 
 # Files in tools Descriptions
 
